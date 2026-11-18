@@ -23,6 +23,12 @@ RULES = {
     "phylogenomics": {"need": []},
     "presence-absence": {"need": []},
     "circos-landscape": {"need": [["chr", "chrom"], ["start"], ["end"]]},
+    "region-architecture": {"need": [["chr", "chrom"], ["start"], ["end"], ["strand"],
+                                     ["family", "repeat_family", "name"]]},
+    "gene-structure": {"need": [["gene", "gene_id", "id"], ["start"], ["end"]]},
+    "go-enrichment": {"need": [["term", "description", "go_term"], ["ontology", "category"],
+                               ["gene_ratio", "generatio"], ["p_adjust", "pvalue", "fdr"]]},
+    "binned-correlation": {"need": [["window", "win", "bin"], ["diversity", "pi", "nuc_div"]]},
 }
 
 
@@ -73,9 +79,39 @@ def main() -> None:
         if nwk and files:
             print(f"1.000  phylogenomics        (tree + matrix, missing: -)")
             return
+        # presence-absence 用宽矩阵 pav.tsv + 注释表，单看 genes.tsv 会判错
+        pav = [f for f in files
+               if os.path.basename(f).lower() in ("pav.tsv", "presence.tsv", "presence_absence.tsv")]
+        if pav:
+            print(f"0.980  presence-absence      (pav matrix + annotations, missing: -)")
+            return
+        # 目录级线索优先：同一图型的辅助表（genes/samples/regions）会把单表判型带偏
+        names = {os.path.basename(f).lower() for f in files}
+        dir_hints = [
+            ({"pav.tsv", "presence.tsv", "presence_absence.tsv"}, "0.980", "presence-absence",
+             "pav matrix + annotations"),
+            ({"repeats.tsv"}, "0.960", "region-architecture", "genes + repeats + tracks"),
+            ({"links.tsv"}, "0.970", "circos-landscape", "chrom + links + tracks"),
+            ({"tracks.tsv"}, "0.960", "linear-tracks", "genes + tracks"),
+            ({"sfs.tsv", "psmc.tsv"}, "0.940", "demography", "sfs / psmc / ld panels"),
+            ({"busco.tsv"}, "0.960", "assembly-qc", "busco + ngx"),
+        ]
+        for wanted, score, aid, note in dir_hints:
+            if wanted & names:
+                print(f"{score}  {aid:24s} ({note}, missing: -)")
+                return
         if not files:
             print("no table found", file=sys.stderr); sys.exit(1)
-        path = files[0]
+
+        def width(f: str) -> int:
+            try:
+                with open(f, encoding="utf-8", errors="replace") as fh:
+                    head = fh.readline()
+                return max(head.count("\t"), head.count(",")) + 1
+            except Exception:
+                return 0
+
+        path = max(files, key=lambda f: (width(f), f))
         print(f"[dir: {label}] using {os.path.basename(path)}")
 
     df = load(path)
