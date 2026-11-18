@@ -2,9 +2,10 @@
 name: nature-genome-plot
 description: >-
   Turn genome, pangenome and population-genomics results into Nature-grade figures.
-  Ships 12 figure archetypes (circos/chord, linear tracks, synteny, assembly QC,
+  Ships 16 figure archetypes (circos/chord, linear tracks, synteny, assembly QC,
   pangenome composition, presence-absence, SV/CNV, population structure, Manhattan/QQ,
-  selection scan, demography, phylogenomics), 39 style presets, runnable R templates,
+  selection scan, demography, phylogenomics, binned correlation, region architecture,
+  gene structure, GO enrichment), 51 style presets, runnable R templates,
   data contracts and fixtures, distilled from 200 open-access 2023-2026 papers in
   Nature, Nature Genetics, Nature Plants, Nature Ecology & Evolution, Nature Microbiology
   and Nature Communications. Also restyles, adapts and audits existing figures against
